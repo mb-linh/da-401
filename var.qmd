@@ -4,6 +4,7 @@ format: html
 ---
 
 ```{r}
+# load libraries
 library(tidyverse)
 library(vars)
 library(tseries)
@@ -12,12 +13,14 @@ library(ggthemes)
 ```
 
 ```{r}
+# read data from main data file
 data <- read_csv("data/master.csv")
 ```
 
 ```{r}
+# Calculate effective exchange rate
 data <- data %>%
-  mutate(
+  mutate( # calculate currency weights using trade data
     TRADE_CHINA = TRADE_EX + TRADE_IM,
     WEIGHT_BND = TRADE_BND / TRADE_CHINA,
     WEIGHT_KHR = TRADE_KHR / TRADE_CHINA,
@@ -30,7 +33,7 @@ data <- data %>%
     WEIGHT_THB = TRADE_THB / TRADE_CHINA,
     WEIGHT_VND = TRADE_VND / TRADE_CHINA,
   ) %>%
-  mutate(
+  mutate( # calculate EER
     EER = (FX_IDR * WEIGHT_IDR) +
           (FX_SGD * WEIGHT_SGD) +
           (FX_MYR * WEIGHT_MYR) +
@@ -45,6 +48,7 @@ data <- data %>%
 ```
 
 ```{r}
+#Figure 1
 ggplot(data, aes(x = YEAR, y = FDI_TOTAL)) +
   geom_line(linewidth = 1) +
   scale_y_continuous(labels = scales::label_number(scale = 1e-9, suffix = " B"),
@@ -61,6 +65,7 @@ ggplot(data, aes(x = YEAR, y = FDI_TOTAL)) +
 ```
 
 ```{r}
+#Figure 2
 ggplot(data, aes(x = YEAR, y = TRADE_BAL)) +
   geom_line(linewidth = 1) +
   scale_y_continuous(labels = scales::label_number(scale = 1e-9, suffix = " B"),
@@ -77,34 +82,46 @@ ggplot(data, aes(x = YEAR, y = TRADE_BAL)) +
 ```
 
 ```{r}
+#ADF tests for FDI and trade balance
 adf.test(data$FDI_TOTAL)
 adf.test(data$TRADE_BAL)
 ```
 
 ```{r}
+#KPSS tests for FDI and trade balance
 kpss.test(data$FDI_TOTAL)
 kpss.test(data$TRADE_BAL)
 ```
 
 ```{r}
+# Testing with applying differences to data
 diff_data <- as.data.frame(apply(data, 2,diff))
 adf.test(diff_data$FDI_TOTAL)
 adf.test(diff_data$TRADE_BAL)
 ```
 
 ```{r}
+# Granger test 
 grangertest(data$FDI_TOTAL, data$TRADE_BAL, order = 1)
 ```
 
 ```{r}
+# Granger test with trade balance differences
+grangertest(data$FDI_TOTAL, diff(data$TRADE_BAL), order = 1)
+```
+
+```{r}
+# Selecting optimal lag length
 VARselect(data, lag.max = 7, type = "const")
 ```
 ```{r}
+# Testing with dataset with fewer variables
 data2 <- subset(data, select=c("FDI_TOTAL","TRADE_BAL","TRADE_WORLD_BAL","GDP_GROWTH_TOTAL","POP_GROWTH","UNEMPLOYMENT","EER"))
 ```
 
 
 ```{r}
+# VAR model (DOESNT WORK ARGH)
 var_model <- VAR(data, p=1, type = "const")
 ```
 
