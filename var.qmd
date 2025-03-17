@@ -1,0 +1,110 @@
+---
+title: "main"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(vars)
+library(tseries)
+library(urca)
+library(ggthemes)
+```
+
+```{r}
+data <- read_csv("data/master.csv")
+```
+
+```{r}
+data <- data %>%
+  mutate(
+    TRADE_CHINA = TRADE_EX + TRADE_IM,
+    WEIGHT_BND = TRADE_BND / TRADE_CHINA,
+    WEIGHT_KHR = TRADE_KHR / TRADE_CHINA,
+    WEIGHT_IDR = TRADE_IDR / TRADE_CHINA,
+    WEIGHT_LAK = TRADE_LAK / TRADE_CHINA,
+    WEIGHT_MYR = TRADE_MYR / TRADE_CHINA,
+    WEIGHT_MMK = TRADE_MMK / TRADE_CHINA,
+    WEIGHT_PHP = TRADE_PHP / TRADE_CHINA,
+    WEIGHT_SGD = TRADE_SGD / TRADE_CHINA,
+    WEIGHT_THB = TRADE_THB / TRADE_CHINA,
+    WEIGHT_VND = TRADE_VND / TRADE_CHINA,
+  ) %>%
+  mutate(
+    EER = (FX_IDR * WEIGHT_IDR) +
+          (FX_SGD * WEIGHT_SGD) +
+          (FX_MYR * WEIGHT_MYR) +
+          (FX_BND * WEIGHT_BND) +
+          (FX_THB * WEIGHT_THB) +
+          (FX_VND * WEIGHT_VND) +
+          (FX_PHP * WEIGHT_PHP) +
+          (FX_MMK * WEIGHT_MMK) +
+          (FX_KHR * WEIGHT_KHR) +
+          (FX_LAK * WEIGHT_LAK)
+  )
+```
+
+```{r}
+ggplot(data, aes(x = YEAR, y = FDI_TOTAL)) +
+  geom_line(linewidth = 1) +
+  scale_y_continuous(labels = scales::label_number(scale = 1e-9, suffix = " B"),
+                     name = "FDI Total (Billions USD)",
+                     breaks = seq(
+                     floor(min(data$FDI_TOTAL) / 1e9) * 1e9,
+                     ceiling(max(data$FDI_TOTAL) / 1e9) * 1e9,
+                     by = 1e9)) +
+  scale_x_continuous(breaks = seq(min(data$YEAR), max(data$YEAR), by = 1),
+                     name = "Year") +
+  labs(title = "FDI Flows from China to ASEAN by Year",
+       caption = "Figure 1. FDI inwards flow from China to ASEAN countries, in billions of USD, from 2015 to 2023.\nIn general, the FDI value followed an upward trend, except for a significant dip in 2019 - 2020,\nprobably due to the COVID-19 pandemic.") +
+  theme_clean()
+```
+
+```{r}
+ggplot(data, aes(x = YEAR, y = TRADE_BAL)) +
+  geom_line(linewidth = 1) +
+  scale_y_continuous(labels = scales::label_number(scale = 1e-9, suffix = " B"),
+                     name = "Trade Balance (Billions USD)",
+                     breaks = seq(
+                     floor(min(data$TRADE_BAL) / 1e10) * 1e10,
+                     ceiling(max(data$TRADE_BAL) / 1e10) * 1e10,
+                     by = 1e10)) +
+  scale_x_continuous(breaks = seq(min(data$YEAR), max(data$YEAR), by = 1),
+                     name = "Year") +
+  labs(title = "Trade Balance Value of ASEAN to China",
+       caption = "Figure 2. ASEAN - China trade balance value, from the ASEAN perspective, from 2015 to 2023.\nThroughout the entire period, ASEAN was in a trade deficit with China, meaning it imported more than it exported.\nThis deficit grew over time, except for brief recoveries in 2017, 2021 and 2023.") +
+  theme_clean()
+```
+
+```{r}
+adf.test(data$FDI_TOTAL)
+adf.test(data$TRADE_BAL)
+```
+
+```{r}
+kpss.test(data$FDI_TOTAL)
+kpss.test(data$TRADE_BAL)
+```
+
+```{r}
+diff_data <- as.data.frame(apply(data, 2,diff))
+adf.test(diff_data$FDI_TOTAL)
+adf.test(diff_data$TRADE_BAL)
+```
+
+```{r}
+grangertest(data$FDI_TOTAL, data$TRADE_BAL, order = 1)
+```
+
+```{r}
+VARselect(data, lag.max = 7, type = "const")
+```
+```{r}
+data2 <- subset(data, select=c("FDI_TOTAL","TRADE_BAL","TRADE_WORLD_BAL","GDP_GROWTH_TOTAL","POP_GROWTH","UNEMPLOYMENT","EER"))
+```
+
+
+```{r}
+var_model <- VAR(data, p=1, type = "const")
+```
+
