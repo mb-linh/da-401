@@ -1,0 +1,62 @@
+---
+title: "fixed_effect"
+format: html
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+# load libraries
+library(tidyverse)
+library(vars)
+library(tseries)
+library(urca)
+library(ggthemes)
+library(car)
+library(fixest)
+```
+
+```{r}
+data <- read_csv("data/Cleaned_and_Sorted_FDI_Data.csv")
+data$gdp <- data$gdp / 1e6
+data$export <- data$export / 1e6
+data$import <- data$import / 1e6
+data$country <- as.factor(data$country)
+data$year <- as.factor(data$year)
+```
+
+```{r}
+ex_model <- feols(export ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+im_model <- feols(import ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+etable(ex_model, im_model, vcov = "hetero")
+```
+
+```{r}
+int_ex_model <- feols(export ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+int_im_model <- feols(import ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+etable(int_ex_model, int_im_model, vcov = "hetero")
+```
+
+```{r}
+summary(int_ex_model)
+```
+
+```{r}
+log_ex_model <- feols(log(export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+log_im_model <- feols(log(import) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+log_total_model <- feols(log(import + export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+etable(log_ex_model, log_im_model, log_total_model, vcov = "hetero")
+```
+
+```{r}
+int_log_ex_model <- feols(log(export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+int_log_im_model <- feols(log(import) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+int_log_total_model <- feols(log(import + export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
+etable(int_log_ex_model, int_log_im_model, int_log_total_model, vcov = "hetero")
+```
