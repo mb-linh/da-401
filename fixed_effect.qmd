@@ -23,7 +23,8 @@ library(fixest)
 ```
 
 ```{r}
-data <- read_csv("data/Cleaned_and_Sorted_FDI_Data.csv")
+# Read and process data
+data <- read_csv("data/master.csv")
 data$gdp <- data$gdp / 1e6
 data$export <- data$export / 1e6
 data$import <- data$import / 1e6
@@ -32,22 +33,28 @@ data$year <- as.factor(data$year)
 ```
 
 ```{r}
+# Baseline models
 ex_model <- feols(export ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
 im_model <- feols(import ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
 etable(ex_model, im_model, vcov = "hetero")
 ```
 
 ```{r}
+# Models with interaction term
 int_ex_model <- feols(export ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
 int_im_model <- feols(import ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
 etable(int_ex_model, int_im_model, vcov = "hetero")
 ```
 
 ```{r}
+# If you want to check p-values of any models, use summary()
 summary(int_ex_model)
 ```
 
+
+
 ```{r}
+# Test: log transformed model
 log_ex_model <- feols(log(export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
 log_im_model <- feols(log(import) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
 log_total_model <- feols(log(import + export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
@@ -55,6 +62,7 @@ etable(log_ex_model, log_im_model, log_total_model, vcov = "hetero")
 ```
 
 ```{r}
+#Test: log model with interaction term
 int_log_ex_model <- feols(log(export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
 int_log_im_model <- feols(log(import) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
 int_log_total_model <- feols(log(import + export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
