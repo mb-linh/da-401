@@ -14,3 +14,5 @@ Data folder content:
 - Population.csv: Contains population values for all world countries. Source: World Bank.
 - Trade.csv: Contains import, export, and total trade values for ASEAN countries. Source: ASEANstats.
 - Unemployment.csv: Contains unemployment rate (percentage) for all world countries. Source: World Bank.
+- Industry.csv: Contains industry as percentage of GDP for all world countries. Source: World Bank.
+- IEF.csv: Contains the Index of Economic Freedom for ASEAN countries. Sourec: The Heritage Foundation.
