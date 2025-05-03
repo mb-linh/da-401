@@ -20,6 +20,7 @@ library(urca)
 library(ggthemes)
 library(car)
 library(fixest)
+library(patchwork)
 ```
 
 ```{r}
@@ -34,15 +35,15 @@ data$year <- as.factor(data$year)
 
 ```{r}
 # Baseline models
-ex_model <- feols(export ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
-im_model <- feols(import ~ inward_fdi + gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+ex_model <- feols(export ~ inward_fdi + gdp + unemployment_rate + population + industry + econ_freedom | csw(country, year), data = data, vcov = "hetero")
+im_model <- feols(import ~ inward_fdi + gdp + unemployment_rate + population + industry + econ_freedom | csw(country, year), data = data, vcov = "hetero")
 etable(ex_model, im_model, vcov = "hetero")
 ```
 
 ```{r}
 # Models with interaction term
-int_ex_model <- feols(export ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
-int_im_model <- feols(import ~ inward_fdi * gdp + unemployment_rate + population | csw(country, year), data = data, vcov = "hetero")
+int_ex_model <- feols(export ~ inward_fdi * gdp + unemployment_rate + population + industry + econ_freedom | csw(country, year), data = data, vcov = "hetero")
+int_im_model <- feols(import ~ inward_fdi * gdp + unemployment_rate + population + industry + econ_freedom | csw(country, year), data = data, vcov = "hetero")
 etable(int_ex_model, int_im_model, vcov = "hetero")
 ```
 
@@ -51,20 +52,28 @@ etable(int_ex_model, int_im_model, vcov = "hetero")
 summary(int_ex_model)
 ```
 
-
-
 ```{r}
-# Test: log transformed model
-log_ex_model <- feols(log(export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-log_im_model <- feols(log(import) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-log_total_model <- feols(log(import + export) ~ inward_fdi + log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-etable(log_ex_model, log_im_model, log_total_model, vcov = "hetero")
+# correlation matrix
+cor(x = data[, c(3,6,7,8,9,10)], use = "complete.obs")
 ```
 
 ```{r}
-#Test: log model with interaction term
-int_log_ex_model <- feols(log(export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-int_log_im_model <- feols(log(import) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-int_log_total_model <- feols(log(import + export) ~ inward_fdi * log(gdp) + unemployment_rate + log(population) | csw(country, year), data = data, vcov = "hetero")
-etable(int_log_ex_model, int_log_im_model, int_log_total_model, vcov = "hetero")
+# Creating Q-Q plots
+par(mfrow = c(2, 2))
+
+qqnorm(resid(ex_model), main = "Export Model")
+qqline(resid(ex_model))
+
+qqnorm(resid(im_model), main = "Import Model")
+qqline(resid(im_model))
+
+qqnorm(resid(int_ex_model), main = "Interaction Export Model")
+qqline(resid(int_ex_model))
+
+qqnorm(resid(int_im_model), main = "Interaction Import Model")
+qqline(resid(int_im_model))
+
+# Reset plotting layout
+par(mfrow = c(1, 1))
 ```
+
